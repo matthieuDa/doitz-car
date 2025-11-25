@@ -37,18 +37,14 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose }) => {
     else if (step === 'CONTACT') setStep('CRITERIA');
   };
 
-  const encodeForm = (form: HTMLFormElement) => {
-    const formEntries = new FormData(form);
-    const pairs = Array.from(formEntries.entries()).map(([key, value]) => [
-      key,
-      value instanceof File ? value.name : String(value),
-    ]);
-    return new URLSearchParams(pairs as string[][]).toString();
+  const encode = (data: Record<string, any>) => {
+    return Object.keys(data)
+      .map(key => encodeURIComponent(key) + "=" + encodeURIComponent(data[key]))
+      .join("&");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const form = e.currentTarget;
     setIsSubmitting(true);
     setErrorMessage('');
 
@@ -56,7 +52,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose }) => {
       await fetch('/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: encodeForm(form),
+        body: encode({ 'form-name': formName, ...formData }),
       });
 
       setIsSuccess(true);
