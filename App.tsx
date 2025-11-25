@@ -20,6 +20,16 @@ function App() {
 
   return (
     <div className="min-h-screen relative z-10">
+      {/* Hidden Netlify form to enable build-time detection */}
+      <form name="doitz-lead" netlify hidden>
+        <input type="text" name="firstName" />
+        <input type="text" name="lastName" />
+        <input type="email" name="email" />
+        <input type="tel" name="phone" />
+        <input type="text" name="budget" />
+        <textarea name="carType" />
+        <input type="text" name="intent" />
+      </form>
       <Background />
       <Header onOpenForm={openForm} />
       
