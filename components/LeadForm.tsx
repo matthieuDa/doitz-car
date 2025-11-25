@@ -9,9 +9,12 @@ interface LeadFormProps {
 }
 
 const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose }) => {
+  const formName = 'doitz-lead';
   const [step, setStep] = useState<FormStep>('INTENT');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [botField, setBotField] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   
   const [formData, setFormData] = useState<FormData>({
     intent: null,
@@ -35,19 +38,63 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose }) => {
     else if (step === 'CONTACT') setStep('CRITERIA');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const encode = (data: Record<string, string>) =>
+    new URLSearchParams(data).toString();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-        setIsSubmitting(false);
-        setIsSuccess(true);
-    }, 1500);
+    setErrorMessage('');
+
+    try {
+      const payload = {
+        'form-name': formName,
+        intent: formData.intent ?? '',
+        budget: formData.budget,
+        carType: formData.carType,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        'bot-field': botField,
+      };
+
+      await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: encode(payload),
+      });
+
+      setIsSuccess(true);
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Une erreur est survenue. Merci de réessayer.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+    <>
+      {/* Hidden form so Netlify can detect fields at build time */}
+      <form
+        name={formName}
+        data-netlify="true"
+        netlify-honeypot="bot-field"
+        hidden
+      >
+        <input type="hidden" name="form-name" value={formName} />
+        <input type="text" name="intent" />
+        <input type="text" name="budget" />
+        <textarea name="carType"></textarea>
+        <input type="text" name="firstName" />
+        <input type="text" name="lastName" />
+        <input type="email" name="email" />
+        <input type="tel" name="phone" />
+        <input type="text" name="bot-field" />
+      </form>
+
+      <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
       {/* Backdrop */}
       <motion.div 
         initial={{ opacity: 0 }}
@@ -210,13 +257,31 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose }) => {
                         <h4 className="text-xl font-medium text-slate-300 mb-6">Dernière étape</h4>
                         <p className="text-slate-400 mb-6 text-sm">Laissez-nous vos coordonnées pour recevoir votre sélection personnalisée.</p>
                         
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                <form 
+                  name={formName}
+                  data-netlify="true"
+                  netlify-honeypot="bot-field"
+                  onSubmit={handleSubmit} 
+                  className="space-y-4"
+                >
+                            <input type="hidden" name="form-name" value={formName} />
+                            <p className="hidden">
+                              <label>
+                                Ne pas remplir
+                                <input
+                                  name="bot-field"
+                                  value={botField}
+                                  onChange={(e) => setBotField(e.target.value)}
+                                />
+                              </label>
+                            </p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-400 mb-2">Prénom</label>
                                     <input 
                                     required
                                     type="text" 
+                                    name="firstName"
                                     className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent"
                                     value={formData.firstName}
                                     onChange={(e) => setFormData({...formData, firstName: e.target.value})}
@@ -227,6 +292,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose }) => {
                                     <input 
                                     required
                                     type="text" 
+                                    name="lastName"
                                     className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent"
                                     value={formData.lastName}
                                     onChange={(e) => setFormData({...formData, lastName: e.target.value})}
@@ -238,6 +304,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose }) => {
                             <input 
                             required
                             type="email" 
+                            name="email"
                             className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent"
                             value={formData.email}
                             onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -248,11 +315,16 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose }) => {
                             <input 
                             required
                             type="tel" 
+                            name="phone"
                             className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent"
                             value={formData.phone}
                             onChange={(e) => setFormData({...formData, phone: e.target.value})}
                             />
                         </div>
+
+                        {errorMessage && (
+                          <p className="text-red-400 text-sm">{errorMessage}</p>
+                        )}
 
                         <div className="flex gap-4 pt-6">
                             <button type="button" onClick={handleBack} className="px-6 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all flex items-center gap-2">
@@ -276,6 +348,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ isOpen, onClose }) => {
         )}
       </motion.div>
     </div>
+    </>
   );
 };
 

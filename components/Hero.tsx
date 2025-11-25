@@ -44,7 +44,7 @@ const Hero: React.FC<HeroProps> = ({ onOpenForm }) => {
 
 
   return (
-    <section className="relative min-h-screen flex items-center pt-28 pb-20 overflow-hidden">
+    <section className="relative min-h-screen flex items-center pt-20 md:pt-28 pb-16 md:pb-20 overflow-hidden">
       
       {/* Cyber Grid Floor */}
       <div className="cyber-grid"></div>
@@ -56,13 +56,13 @@ const Hero: React.FC<HeroProps> = ({ onOpenForm }) => {
       <div className="container mx-auto px-6 relative z-10 grid lg:grid-cols-2 gap-16 items-center">
         
         {/* Left Content */}
-        <div className="text-center lg:text-left">
+        <div className="text-center lg:text-left space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <div className="inline-flex items-center gap-3 mb-8 px-5 py-2.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md shadow-2xl">
+            <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md shadow-2xl">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
@@ -72,18 +72,18 @@ const Hero: React.FC<HeroProps> = ({ onOpenForm }) => {
                 </span>
             </div>
 
-            <h1 className="text-6xl lg:text-8xl font-bold text-white leading-[1] mb-8 tracking-tight font-display drop-shadow-2xl">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-tight tracking-tight font-display drop-shadow-2xl">
               Votre véhicule <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-300 to-slate-500">de rêve.</span><br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 text-5xl lg:text-7xl">Au vrai prix.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">Au vrai prix.</span>
             </h1>
             
-            <p className="text-xl text-slate-400 max-w-xl leading-relaxed mb-12 font-light mx-auto lg:mx-0">
+            <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl leading-relaxed font-light mx-auto lg:mx-0">
               DOITZ gère l'importation de A à Z. <br className="hidden md:block"/>
-              Économisez jusqu'à 40% sans vous soucier des formalités.
+              Économisez jusqu'à 30% sans vous soucier des formalités.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center gap-5 justify-center lg:justify-start mb-12">
+            <div className="flex flex-col sm:flex-row items-center gap-5 justify-center lg:justify-start">
               <button 
                 onClick={onOpenForm}
                 className="w-full sm:w-auto px-8 py-5 bg-brand-accent text-white rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 group hover:bg-blue-600 hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] hover:-translate-y-1"
@@ -103,14 +103,14 @@ const Hero: React.FC<HeroProps> = ({ onOpenForm }) => {
               </a>
             </div>
 
-            <div className="flex items-center gap-8 justify-center lg:justify-start border-t border-white/5 pt-8">
+            <div className="flex flex-wrap items-center gap-6 justify-center lg:justify-start border-t border-white/5 pt-6">
                 <div className="text-left">
                     <p className="text-2xl font-bold text-white font-display">100%</p>
                     <p className="text-xs text-slate-500 uppercase tracking-wider">Sécurisé</p>
                 </div>
                 <div className="w-[1px] h-10 bg-white/10"></div>
                 <div className="text-left">
-                    <p className="text-2xl font-bold text-white font-display">-40%</p>
+                    <p className="text-2xl font-bold text-white font-display">-30%</p>
                     <p className="text-xs text-slate-500 uppercase tracking-wider">Économie max</p>
                 </div>
                  <div className="w-[1px] h-10 bg-white/10"></div>
