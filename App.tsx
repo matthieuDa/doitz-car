@@ -21,7 +21,14 @@ function App() {
   return (
     <div className="min-h-screen relative z-10">
       {/* Hidden Netlify form to enable build-time detection */}
-      <form name="doitz-lead" netlify hidden>
+      <form
+        name="doitz-lead"
+        method="POST"
+        data-netlify="true"
+        netlify-honeypot="bot-field"
+        hidden
+      >
+        <input type="hidden" name="form-name" value="doitz-lead" />
         <input type="text" name="firstName" />
         <input type="text" name="lastName" />
         <input type="email" name="email" />
@@ -29,6 +36,7 @@ function App() {
         <input type="text" name="budget" />
         <textarea name="carType" />
         <input type="text" name="intent" />
+        <input type="text" name="bot-field" />
       </form>
       <Background />
       <Header onOpenForm={openForm} />
