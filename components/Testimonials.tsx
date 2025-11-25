@@ -49,7 +49,7 @@ const Testimonials = () => {
                 <Star key={i} className="text-yellow-500 fill-yellow-500 w-5 h-5" />
              ))}
           </div>
-          <p className="text-slate-400 mt-4 text-sm font-medium">Note moyenne 5.0/5</p>
+          <p className="text-slate-400 mt-4 text-sm font-medium">Note moyenne 5/5</p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
