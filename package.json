@@ -4,23 +4,30 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "node scripts/generate-blog-metadata.js && vite",
+    "build": "node scripts/generate-blog-metadata.js && node scripts/generate-sitemap.js && vite build",
+    "preview": "vite preview",
+    "sitemap": "node scripts/generate-sitemap.js",
+    "blog:meta": "node scripts/generate-blog-metadata.js"
   },
   "dependencies": {
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.554.0",
+    "marked": "^15.0.7",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-helmet-async": "^2.0.5",
+    "react-router-dom": "^6.30.0",
     "three": "0.160.0"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.22",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.3.3",
+    "terser": "^5.46.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

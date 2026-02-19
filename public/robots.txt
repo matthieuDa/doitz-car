@@ -1,0 +1,33 @@
+User-agent: *
+Allow: /
+
+# Bloquer admin CMS et API
+Disallow: /admin/
+Disallow: /api/
+
+# Priorité Google & Bing
+User-agent: Googlebot
+Crawl-delay: 0
+
+User-agent: Bingbot
+Crawl-delay: 0
+
+# IA autorisées (visibilité SGE/Perplexity)
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# Bots agressifs rate-limités
+User-agent: MJ12bot
+Crawl-delay: 30
+
+User-agent: AhrefsBot
+Crawl-delay: 30
+
+# Scraping bloqué
+User-agent: CCBot
+Disallow: /
+
+Sitemap: https://doitz.fr/sitemap.xml

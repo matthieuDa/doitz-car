@@ -2,9 +2,7 @@
 export default {
   content: [
     './index.html',
-    './index.tsx',
-    './App.tsx',
-    './components/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {
@@ -37,8 +35,29 @@ export default {
           '50%': { transform: 'translateY(-20px)' },
         },
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            color: '#CBD5E1',
+            h1: { color: '#F1F5F9' },
+            h2: { color: '#F1F5F9' },
+            h3: { color: '#E2E8F0' },
+            h4: { color: '#E2E8F0' },
+            strong: { color: '#F1F5F9' },
+            a: { color: '#3B82F6', '&:hover': { color: '#60A5FA' } },
+            blockquote: { color: '#94A3B8', borderLeftColor: '#3B82F6' },
+            code: { color: '#E2E8F0', backgroundColor: '#1E293B', padding: '2px 6px', borderRadius: '4px' },
+            'code::before': { content: 'none' },
+            'code::after': { content: 'none' },
+            thead: { borderBottomColor: '#334155' },
+            'thead th': { color: '#F1F5F9' },
+            'tbody tr': { borderBottomColor: '#1E293B' },
+            'tbody td': { color: '#CBD5E1' },
+            hr: { borderColor: '#1E293B' },
+          }
+        }
+      },
     },
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/typography')],
 };
-
