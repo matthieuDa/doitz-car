@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, Tag, Phone, MessageCircle, ArrowRight } from 'lucide-react';
-import Header from '@/components/Header';
-import LeadForm from '@/components/LeadForm';
 import ReadingProgress from '@/components/blog/ReadingProgress';
 import TableOfContents from '@/components/blog/TableOfContents';
 import ArticleContent from '@/components/blog/ArticleContent';
@@ -39,7 +37,7 @@ const categoryLabels: Record<string, string> = {
 
 const BlogPostSSG: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
-    const [isFormOpen, setIsFormOpen] = useState(false);
+    const openForm = () => window.dispatchEvent(new Event('open-lead-form'));
 
     // Find the markdown module for this slug
     const markdownRaw = useMemo(() => {
@@ -71,7 +69,7 @@ const BlogPostSSG: React.FC = () => {
     if (!markdownRaw) {
         return (
             <>
-                <Header onOpenForm={() => setIsFormOpen(true)} />
+
                 <div className="min-h-screen flex items-center justify-center pt-24">
                     <div className="text-center">
                         <h1 className="text-4xl font-bold text-white mb-4">Article non trouvé</h1>
@@ -134,7 +132,7 @@ const BlogPostSSG: React.FC = () => {
             />
 
             <ReadingProgress />
-            <Header onOpenForm={() => setIsFormOpen(true)} />
+
 
             <main className="min-h-screen pt-24">
                 {/* Hero */}
@@ -192,7 +190,7 @@ const BlogPostSSG: React.FC = () => {
                                         <h4 className="text-lg font-bold text-white font-display mb-2">Un projet auto ?</h4>
                                         <p className="text-sm text-slate-400 mb-4">Décrivez-nous votre besoin, on s'occupe du reste.</p>
                                         <button
-                                            onClick={() => setIsFormOpen(true)}
+                                            onClick={openForm}
                                             className="w-full py-3 px-4 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-500 transition-all flex items-center justify-center gap-2"
                                         >
                                             Consultation gratuite
@@ -221,7 +219,7 @@ const BlogPostSSG: React.FC = () => {
                             </div>
 
                             {/* CTA Sidebar - Desktop */}
-                            <CTASidebar onOpenForm={() => setIsFormOpen(true)} />
+                            <CTASidebar onOpenForm={openForm} />
                         </div>
                     </div>
                 </section>
@@ -250,7 +248,7 @@ const BlogPostSSG: React.FC = () => {
                 )}
             </main>
 
-            <LeadForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
+
         </>
     );
 };

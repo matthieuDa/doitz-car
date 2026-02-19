@@ -2,8 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, ArrowRight } from 'lucide-react';
-import Header from '@/components/Header';
-import LeadForm from '@/components/LeadForm';
 import BlogCard from '@/components/blog/BlogCard';
 import { SEO } from '@/components/layout/SEO';
 import { generateBreadcrumbSchema } from '@/utils/structuredData';
@@ -13,7 +11,6 @@ import blogMetadata from '@/data/blog-metadata.json';
 const ARTICLES_PER_PAGE = 12;
 
 const Blog: React.FC = () => {
-    const [isFormOpen, setIsFormOpen] = useState(false);
     const [activeCategory, setActiveCategory] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -49,7 +46,7 @@ const Blog: React.FC = () => {
                 breadcrumbs={breadcrumbs}
             />
 
-            <Header onOpenForm={() => setIsFormOpen(true)} />
+
 
             <main className="min-h-screen pt-24">
                 {/* Hero */}
@@ -88,8 +85,8 @@ const Blog: React.FC = () => {
                                     key={cat.id}
                                     onClick={() => handleCategoryChange(cat.id)}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${activeCategory === cat.id
-                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                                            : 'bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200 border border-white/5'
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                        : 'bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200 border border-white/5'
                                         }`}
                                 >
                                     <span>{cat.icon}</span>
@@ -136,8 +133,8 @@ const Blog: React.FC = () => {
                                             window.scrollTo({ top: 0, behavior: 'smooth' });
                                         }}
                                         className={`w-10 h-10 rounded-xl text-sm font-medium transition-all ${currentPage === page
-                                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                                                : 'bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] border border-white/5'
+                                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                            : 'bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] border border-white/5'
                                             }`}
                                     >
                                         {page}
@@ -159,7 +156,7 @@ const Blog: React.FC = () => {
                                 Décrivez-nous votre projet auto. Consultation gratuite et sans engagement.
                             </p>
                             <button
-                                onClick={() => setIsFormOpen(true)}
+                                onClick={() => window.dispatchEvent(new Event('open-lead-form'))}
                                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-500 transition-all hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] group"
                             >
                                 <span>Consultation gratuite</span>
@@ -169,8 +166,6 @@ const Blog: React.FC = () => {
                     </div>
                 </section>
             </main>
-
-            <LeadForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
         </>
     );
 };

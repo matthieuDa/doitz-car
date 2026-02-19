@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import Home from '@/pages/Home';
@@ -12,10 +12,21 @@ import SimulateurCoutUtilisation from '@/pages/outils/SimulateurCoutUtilisation'
 import ComparateurVehicules from '@/pages/outils/ComparateurVehicules';
 import CalculateurDecote from '@/pages/outils/CalculateurDecote';
 import NotFound from '@/pages/NotFound';
+import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import LeadForm from '@/components/LeadForm';
 import Background from '@/components/Background';
 
 function App() {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  // Allow any child component to open the form via a custom event
+  useEffect(() => {
+    const handler = () => setIsFormOpen(true);
+    window.addEventListener('open-lead-form', handler);
+    return () => window.removeEventListener('open-lead-form', handler);
+  }, []);
+
   return (
     <HelmetProvider>
       <BrowserRouter>
@@ -40,6 +51,7 @@ function App() {
           </form>
 
           <Background />
+          <Header onOpenForm={() => setIsFormOpen(true)} />
 
           <Routes>
             <Route path="/" element={<Home />} />
@@ -56,6 +68,7 @@ function App() {
           </Routes>
 
           <Footer />
+          <LeadForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
         </div>
       </BrowserRouter>
     </HelmetProvider>

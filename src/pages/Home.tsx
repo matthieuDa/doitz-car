@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import Header from '@/components/Header';
+import React from 'react';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import SavingsCalculator from '@/components/SavingsCalculator';
@@ -8,15 +7,11 @@ import GuideTeaser from '@/components/GuideTeaser';
 import Testimonials from '@/components/Testimonials';
 import Pricing from '@/components/Pricing';
 import FAQ from '@/components/FAQ';
-import LeadForm from '@/components/LeadForm';
 import { SEO } from '@/components/layout/SEO';
 import { generateLocalBusinessSchema, generateFAQSchema } from '@/utils/structuredData';
 
 const Home: React.FC = () => {
-    const [isFormOpen, setIsFormOpen] = useState(false);
-
-    const openForm = () => setIsFormOpen(true);
-    const closeForm = () => setIsFormOpen(false);
+    const openForm = () => window.dispatchEvent(new Event('open-lead-form'));
 
     const faqSchema = generateFAQSchema([
         { question: 'Quels sont les délais moyens pour une importation ?', answer: 'En général, comptez entre 3 et 4 semaines pour une importation depuis l\'Union Européenne.' },
@@ -33,8 +28,6 @@ const Home: React.FC = () => {
                 schema={[generateLocalBusinessSchema(), faqSchema]}
             />
 
-            <Header onOpenForm={openForm} />
-
             <main>
                 <Hero onOpenForm={openForm} />
                 <Features />
@@ -45,8 +38,6 @@ const Home: React.FC = () => {
                 <Pricing onOpenForm={openForm} />
                 <FAQ />
             </main>
-
-            <LeadForm isOpen={isFormOpen} onClose={closeForm} />
         </>
     );
 };

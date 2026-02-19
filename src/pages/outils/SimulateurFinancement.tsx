@@ -1,8 +1,8 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, TrendingDown, TrendingUp, AlertTriangle, CheckCircle, Calculator } from 'lucide-react';
+import { ArrowLeft, TrendingDown, TrendingUp, AlertTriangle, CheckCircle, Calculator, Info } from 'lucide-react';
 
 /* ─── Reusable slider with native drag (no overlay div) ─── */
 const SliderInput = ({ label, value, onChange, min, max, step, unit, suffix }: {
@@ -59,10 +59,10 @@ const ResultCard = ({ title, icon, isBest, isWarning, children }: {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className={`relative rounded-2xl p-5 border transition-all ${isBest
-                ? 'bg-green-500/5 border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.1)]'
-                : isWarning
-                    ? 'bg-amber-500/5 border-amber-500/20'
-                    : 'bg-white/[0.02] border-white/10'
+            ? 'bg-green-500/5 border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.1)]'
+            : isWarning
+                ? 'bg-amber-500/5 border-amber-500/20'
+                : 'bg-white/[0.02] border-white/10'
             }`}
     >
         {isBest && (
@@ -83,12 +83,38 @@ const ResultCard = ({ title, icon, isBest, isWarning, children }: {
     </motion.div>
 );
 
+/* ─── Mode definitions ─── */
+type ModeKey = 'loa' | 'lld' | 'credit' | 'cash' | 'occasion';
+
+const MODE_CONFIG: { key: ModeKey; label: string; shortLabel: string; color: string; bg: string; locked?: boolean }[] = [
+    { key: 'occasion', label: 'Occasion récente à crédit', shortLabel: '🏆 Occasion', color: 'text-green-400', bg: 'bg-green-500/5 border-green-500/30', locked: true },
+    { key: 'loa', label: 'LOA (Location avec Option d\'Achat)', shortLabel: 'LOA', color: 'text-amber-400', bg: 'bg-amber-500/5 border-amber-500/20' },
+    { key: 'lld', label: 'LLD (Location Longue Durée)', shortLabel: 'LLD', color: 'text-red-400', bg: 'bg-red-500/5 border-red-500/20' },
+    { key: 'credit', label: 'Crédit auto (neuf)', shortLabel: 'Crédit neuf', color: 'text-blue-400', bg: 'bg-blue-500/5 border-blue-500/20' },
+    { key: 'cash', label: 'Achat comptant (neuf)', shortLabel: 'Comptant', color: 'text-green-300', bg: 'bg-green-500/5 border-green-500/20' },
+];
+
 const SimulateurFinancement = () => {
     const [price, setPrice] = useState(30000);
     const [duration, setDuration] = useState(48);
     const [downPayment, setDownPayment] = useState(3000);
     const [kmPerYear, setKmPerYear] = useState(15000);
     const [creditRate, setCreditRate] = useState(4.5);
+    const [selectedModes, setSelectedModes] = useState<Set<ModeKey>>(new Set(['occasion', 'loa', 'credit']));
+
+    const toggleMode = (key: ModeKey) => {
+        if (key === 'occasion') return; // locked
+        setSelectedModes(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) {
+                if (next.size <= 2) return prev; // minimum 2 modes
+                next.delete(key);
+            } else {
+                next.add(key);
+            }
+            return next;
+        });
+    };
 
     const results = useMemo(() => {
         const months = duration;
@@ -105,9 +131,8 @@ const SimulateurFinancement = () => {
         const loaFinCost = price * 0.08;
         const loaMonthly = Math.round((price - loaResidualValue + loaFinCost - downPayment) / months);
         const loaTotalPaid = downPayment + loaMonthly * months;
-        const loaNetCostReturn = loaTotalPaid; // restitution: all paid, nothing left
-        const loaNetCostBuy = loaTotalPaid + loaResidualValue; // if buying
-        // Coût réel mensuel = total net / months (what it REALLY cost per month after all is done)
+        const loaNetCostReturn = loaTotalPaid;
+        const loaNetCostBuy = loaTotalPaid + loaResidualValue;
         const loaRealMonthly = Math.round(loaNetCostReturn / months);
 
         // ── LLD ──
@@ -154,11 +179,15 @@ const SimulateurFinancement = () => {
         };
     }, [price, duration, downPayment, kmPerYear, creditRate]);
 
-    const bestOption = Object.entries(results).reduce((best, [key, val]) =>
-        (val as any).realMonthly < best.cost ? { name: key, cost: (val as any).realMonthly } : best
-        , { name: '', cost: Infinity });
+    // Best option only among selected modes
+    const bestOption = Array.from(selectedModes).reduce((best, key) => {
+        const r = results[key] as any;
+        return r.realMonthly < best.cost ? { name: key, cost: r.realMonthly } : best;
+    }, { name: '' as string, cost: Infinity });
 
     const fmt = (n: number) => n.toLocaleString('fr-FR') + ' €';
+
+    const activeModes = MODE_CONFIG.filter(m => selectedModes.has(m.key));
 
     return (
         <>
@@ -169,8 +198,8 @@ const SimulateurFinancement = () => {
 
             <div className="min-h-screen pt-28 pb-16 px-4">
                 <div className="max-w-6xl mx-auto">
-                    <Link to="/blog" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors mb-8">
-                        <ArrowLeft size={16} /> Retour au blog
+                    <Link to="/outils" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors mb-8">
+                        <ArrowLeft size={16} /> Retour aux outils
                     </Link>
 
                     <div className="text-center mb-12">
@@ -178,17 +207,55 @@ const SimulateurFinancement = () => {
                             <Calculator size={14} /> OUTIL INTERACTIF
                         </div>
                         <h1 className="text-3xl md:text-5xl font-bold text-white mb-3 font-display tracking-tight">
-                            Simulateur <span className="text-gradient">LLD vs LOA vs Crédit</span>
+                            Simulateur <span className="text-gradient">Financement Auto</span>
                         </h1>
                         <p className="text-slate-400 max-w-2xl mx-auto">
-                            Comparez les 5 modes de financement. Le <strong className="text-white">coût réel mensuel</strong> tient compte de la revente ou restitution — c'est LE chiffre qui compte.
+                            Comparez les modes de financement qui vous intéressent. Le <strong className="text-white">coût réel mensuel</strong> tient compte de la revente ou restitution — c'est LE chiffre qui compte.
                         </p>
+                    </div>
+
+                    {/* ── Mode selection ── */}
+                    <div className="glass-panel rounded-3xl p-4 md:p-6 mb-6">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Info size={14} className="text-blue-400 shrink-0" />
+                            <p className="text-xs text-slate-400">Cochez les financements à comparer. L'option « Occasion récente » est toujours incluse comme référence.</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {MODE_CONFIG.map(m => {
+                                const isSelected = selectedModes.has(m.key);
+                                const isLocked = m.locked;
+                                return (
+                                    <button
+                                        key={m.key}
+                                        onClick={() => toggleMode(m.key)}
+                                        disabled={isLocked}
+                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border ${isSelected
+                                                ? isLocked
+                                                    ? 'bg-green-500/15 border-green-500/40 text-green-400 cursor-default'
+                                                    : 'bg-blue-500/15 border-blue-500/40 text-blue-300'
+                                                : 'bg-white/[0.02] border-white/10 text-slate-500 hover:border-white/20 hover:text-slate-300'
+                                            }`}
+                                    >
+                                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center text-[10px] ${isSelected
+                                                ? isLocked
+                                                    ? 'border-green-500 bg-green-500 text-white'
+                                                    : 'border-blue-500 bg-blue-500 text-white'
+                                                : 'border-slate-600'
+                                            }`}>
+                                            {isSelected && '✓'}
+                                        </span>
+                                        {m.label}
+                                        {isLocked && <span className="text-[10px] text-green-500/70 ml-1">recommandé</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {/* ── Sliders ── */}
                     <div className="glass-panel rounded-3xl p-6 md:p-8 mb-8">
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <SliderInput label="Prix du véhicule" value={price} onChange={setPrice} min={10000} max={100000} step={1000} unit="€" />
+                            <SliderInput label="Prix du véhicule neuf" value={price} onChange={setPrice} min={10000} max={100000} step={1000} unit="€" />
                             <SliderInput label="Durée" value={duration} onChange={setDuration} min={12} max={72} step={6} unit=" mois" />
                             <SliderInput label="Apport / 1er loyer" value={downPayment} onChange={setDownPayment} min={0} max={Math.round(price * 0.3)} step={500} unit="€" />
                             <SliderInput label="Kilométrage / an" value={kmPerYear} onChange={setKmPerYear} min={5000} max={40000} step={1000} suffix="km/an" />
@@ -196,22 +263,16 @@ const SimulateurFinancement = () => {
                         </div>
                     </div>
 
-                    {/* ── Big metric: coût réel mensuel ── */}
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-                        {([
-                            { key: 'loa', label: 'LOA', color: 'text-amber-400', bg: 'bg-amber-500/5 border-amber-500/20' },
-                            { key: 'lld', label: 'LLD', color: 'text-red-400', bg: 'bg-red-500/5 border-red-500/20' },
-                            { key: 'credit', label: 'Crédit neuf', color: 'text-blue-400', bg: 'bg-blue-500/5 border-blue-500/20' },
-                            { key: 'cash', label: 'Comptant', color: 'text-green-300', bg: 'bg-green-500/5 border-green-500/20' },
-                            { key: 'occasion', label: '🏆 Occasion', color: 'text-green-400', bg: 'bg-green-500/5 border-green-500/30' },
-                        ] as const).map(({ key, label, color, bg }) => {
+                    {/* ── Big metric: coût réel mensuel (only selected modes) ── */}
+                    <div className={`grid gap-3 mb-8`} style={{ gridTemplateColumns: `repeat(${activeModes.length}, minmax(0, 1fr))` }}>
+                        {activeModes.map(({ key, shortLabel, color, bg }) => {
                             const r = results[key] as any;
                             const isBest = bestOption.name === key;
                             return (
                                 <motion.div key={key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                     className={`rounded-xl border p-4 text-center relative ${isBest ? 'bg-green-500/10 border-green-500/40 shadow-[0_0_20px_rgba(34,197,94,0.15)]' : bg}`}>
                                     {isBest && <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded-full whitespace-nowrap">Le moins cher</div>}
-                                    <div className={`text-[10px] uppercase tracking-widest font-bold ${color} mb-1`}>{label}</div>
+                                    <div className={`text-[10px] uppercase tracking-widest font-bold ${color} mb-1`}>{shortLabel}</div>
                                     <div className="text-xs text-slate-500 mb-1">Coût réel / mois</div>
                                     <motion.div key={r.realMonthly} initial={{ scale: 0.9 }} animate={{ scale: 1 }}
                                         className={`text-2xl md:text-3xl font-bold font-display tabular-nums ${isBest ? 'text-green-400' : 'text-white'}`}>
@@ -223,65 +284,85 @@ const SimulateurFinancement = () => {
                         })}
                     </div>
 
-                    {/* ── Detail cards ── */}
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-                        <ResultCard title="LOA (Location avec Option)" icon={<AlertTriangle className="text-amber-400" size={20} />} isWarning>
-                            <Stat label="Mensualité contrat" value={fmt(results.loa.monthly)} />
-                            <Stat label="Total versé" value={fmt(results.loa.totalPaid)} />
-                            <Stat label="Rachat (option)" value={fmt(results.loa.residual)} />
-                            <Stat label="Coût si restitution" value={fmt(results.loa.netCost)} danger />
-                            <Stat label="Coût si rachat" value={fmt(results.loa.buyNetCost)} danger />
-                            <Stat label="⭐ Coût réel / mois" value={fmt(results.loa.realMonthly)} danger big />
-                            <div className="mt-3 p-2 bg-amber-500/10 rounded-lg">
-                                <p className="text-xs text-amber-300">⚠️ 75% des souscripteurs rendent le véhicule : prix de rachat trop haut</p>
-                            </div>
-                        </ResultCard>
-
-                        <ResultCard title="LLD (Location Longue Durée)" icon={<TrendingDown className="text-red-400" size={20} />} isWarning>
-                            <Stat label="Mensualité (entretien incl.)" value={fmt(results.lld.monthly)} />
-                            <Stat label="Total versé" value={fmt(results.lld.totalPaid)} />
-                            <Stat label="Coût réel net" value={fmt(results.lld.netCost)} danger />
-                            <Stat label="⭐ Coût réel / mois" value={fmt(results.lld.realMonthly)} danger big />
-                            <Stat label="Propriétaire ?" value="❌ Jamais" />
-                            <div className="mt-3 p-2 bg-red-500/10 rounded-lg">
-                                <p className="text-xs text-red-300">Chaque euro versé est perdu. + frais restitution (500-3 000€).</p>
-                            </div>
-                        </ResultCard>
-
-                        <ResultCard title="Crédit auto (neuf)" icon={<CheckCircle className="text-blue-400" size={20} />} isBest={bestOption.name === 'credit'}>
-                            <Stat label="Mensualité" value={fmt(results.credit.monthly)} />
-                            <Stat label="Total remboursé" value={fmt(results.credit.totalPaid)} />
-                            <Stat label="Dont intérêts" value={fmt(results.credit.interest)} />
-                            <Stat label="Valeur résiduelle" value={fmt(results.credit.residual)} highlight />
-                            <Stat label="⭐ Coût réel / mois" value={fmt(results.credit.realMonthly)} highlight={bestOption.name === 'credit'} big />
-                            <Stat label="Propriétaire ?" value="✅ Oui" />
-                        </ResultCard>
-
-                        <ResultCard title="Achat comptant (neuf)" icon={<CheckCircle className="text-green-400" size={20} />} isBest={bestOption.name === 'cash'}>
-                            <Stat label="Prix d'achat" value={fmt(price)} />
-                            <Stat label="Intérêts" value="0 €" highlight />
-                            <Stat label="Valeur résiduelle" value={fmt(results.cash.residual)} highlight />
-                            <Stat label="⭐ Coût réel / mois" value={fmt(results.cash.realMonthly)} highlight={bestOption.name === 'cash'} big />
-                            <Stat label="Propriétaire ?" value="✅ Oui (immédiat)" />
-                            <div className="mt-3 p-2 bg-green-500/10 rounded-lg">
-                                <p className="text-xs text-green-300">Pouvoir de négociation maximal (-5 à -10%).</p>
-                            </div>
-                        </ResultCard>
-
-                        <ResultCard title="🏆 Occasion 3 ans + Crédit" icon={<TrendingUp className="text-green-400" size={20} />} isBest={bestOption.name === 'occasion'}>
-                            <Stat label="Prix d'achat (−45%)" value={fmt(results.occasion.price)} highlight />
-                            <Stat label="Mensualité" value={fmt(results.occasion.monthly)} />
-                            <Stat label="Total remboursé" value={fmt(results.occasion.totalPaid)} />
-                            <Stat label="Valeur résiduelle" value={fmt(results.occasion.residual)} highlight />
-                            <Stat label="⭐ Coût réel / mois" value={fmt(results.occasion.realMonthly)} highlight big />
-                            <Stat label="Propriétaire ?" value="✅ Oui" />
-                            <div className="mt-3 p-2 bg-green-500/10 rounded-lg">
-                                <p className="text-xs text-green-300">🏆 Stratégie Doitz : occasion + import = jusqu'à -60% vs LOA neuve</p>
-                            </div>
-                        </ResultCard>
+                    {/* ── Explanation tooltip ── */}
+                    <div className="glass-panel rounded-xl p-4 mb-8 flex items-start gap-3">
+                        <Info size={16} className="text-blue-400 shrink-0 mt-0.5" />
+                        <div className="text-xs text-slate-400">
+                            <strong className="text-white">Comment lire le « Coût réel / mois » ?</strong><br />
+                            C'est le vrai coût d'usage de votre véhicule : <span className="text-blue-400">(total versé − valeur de revente) ÷ nombre de mois</span>.<br />
+                            Il élimine l'illusion des « petites mensualités » de LOA/LLD qui masquent un coût total bien plus élevé.
+                        </div>
                     </div>
 
-                    {/* ── Comparative table ── */}
+                    {/* ── Detail cards (only selected modes) ── */}
+                    <div className={`grid md:grid-cols-2 lg:grid-cols-${Math.min(activeModes.length, 3)} gap-5 mb-8`}>
+                        {selectedModes.has('occasion') && (
+                            <ResultCard title="🏆 Occasion 3 ans + Crédit" icon={<TrendingUp className="text-green-400" size={20} />} isBest={bestOption.name === 'occasion'}>
+                                <Stat label="Prix d'achat (−45%)" value={fmt(results.occasion.price)} highlight />
+                                <Stat label="Mensualité" value={fmt(results.occasion.monthly)} />
+                                <Stat label="Total remboursé" value={fmt(results.occasion.totalPaid)} />
+                                <Stat label="Valeur résiduelle" value={fmt(results.occasion.residual)} highlight />
+                                <Stat label="⭐ Coût réel / mois" value={fmt(results.occasion.realMonthly)} highlight big />
+                                <Stat label="Propriétaire ?" value="✅ Oui" />
+                                <div className="mt-3 p-2 bg-green-500/10 rounded-lg">
+                                    <p className="text-xs text-green-300">🏆 Stratégie Doitz : occasion + import = jusqu'à -60% vs LOA neuve</p>
+                                </div>
+                            </ResultCard>
+                        )}
+
+                        {selectedModes.has('loa') && (
+                            <ResultCard title="LOA (Location avec Option)" icon={<AlertTriangle className="text-amber-400" size={20} />} isWarning>
+                                <Stat label="Mensualité contrat" value={fmt(results.loa.monthly)} />
+                                <Stat label="Total versé" value={fmt(results.loa.totalPaid)} />
+                                <Stat label="Rachat (option)" value={fmt(results.loa.residual)} />
+                                <Stat label="Coût si restitution" value={fmt(results.loa.netCost)} danger />
+                                <Stat label="Coût si rachat" value={fmt(results.loa.buyNetCost)} danger />
+                                <Stat label="⭐ Coût réel / mois" value={fmt(results.loa.realMonthly)} danger big />
+                                <div className="mt-3 p-2 bg-amber-500/10 rounded-lg">
+                                    <p className="text-xs text-amber-300">⚠️ 75% des souscripteurs rendent le véhicule : prix de rachat trop haut</p>
+                                </div>
+                            </ResultCard>
+                        )}
+
+                        {selectedModes.has('lld') && (
+                            <ResultCard title="LLD (Location Longue Durée)" icon={<TrendingDown className="text-red-400" size={20} />} isWarning>
+                                <Stat label="Mensualité (entretien incl.)" value={fmt(results.lld.monthly)} />
+                                <Stat label="Total versé" value={fmt(results.lld.totalPaid)} />
+                                <Stat label="Coût réel net" value={fmt(results.lld.netCost)} danger />
+                                <Stat label="⭐ Coût réel / mois" value={fmt(results.lld.realMonthly)} danger big />
+                                <Stat label="Propriétaire ?" value="❌ Jamais" />
+                                <div className="mt-3 p-2 bg-red-500/10 rounded-lg">
+                                    <p className="text-xs text-red-300">Chaque euro versé est perdu. + frais restitution (500-3 000€).</p>
+                                </div>
+                            </ResultCard>
+                        )}
+
+                        {selectedModes.has('credit') && (
+                            <ResultCard title="Crédit auto (neuf)" icon={<CheckCircle className="text-blue-400" size={20} />} isBest={bestOption.name === 'credit'}>
+                                <Stat label="Mensualité" value={fmt(results.credit.monthly)} />
+                                <Stat label="Total remboursé" value={fmt(results.credit.totalPaid)} />
+                                <Stat label="Dont intérêts" value={fmt(results.credit.interest)} />
+                                <Stat label="Valeur résiduelle" value={fmt(results.credit.residual)} highlight />
+                                <Stat label="⭐ Coût réel / mois" value={fmt(results.credit.realMonthly)} highlight={bestOption.name === 'credit'} big />
+                                <Stat label="Propriétaire ?" value="✅ Oui" />
+                            </ResultCard>
+                        )}
+
+                        {selectedModes.has('cash') && (
+                            <ResultCard title="Achat comptant (neuf)" icon={<CheckCircle className="text-green-400" size={20} />} isBest={bestOption.name === 'cash'}>
+                                <Stat label="Prix d'achat" value={fmt(price)} />
+                                <Stat label="Intérêts" value="0 €" highlight />
+                                <Stat label="Valeur résiduelle" value={fmt(results.cash.residual)} highlight />
+                                <Stat label="⭐ Coût réel / mois" value={fmt(results.cash.realMonthly)} highlight={bestOption.name === 'cash'} big />
+                                <Stat label="Propriétaire ?" value="✅ Oui (immédiat)" />
+                                <div className="mt-3 p-2 bg-green-500/10 rounded-lg">
+                                    <p className="text-xs text-green-300">Pouvoir de négociation maximal (-5 à -10%).</p>
+                                </div>
+                            </ResultCard>
+                        )}
+                    </div>
+
+                    {/* ── Comparative table (only selected modes) ── */}
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                         className="glass-panel rounded-2xl p-6 mb-8">
                         <h2 className="text-lg font-bold text-white font-display mb-4">📊 Synthèse comparative</h2>
@@ -298,18 +379,13 @@ const SimulateurFinancement = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {([
-                                        { name: 'LOA', data: results.loa, color: 'text-amber-300', monthly: results.loa.monthly },
-                                        { name: 'LLD', data: results.lld, color: 'text-red-300', monthly: results.lld.monthly },
-                                        { name: 'Crédit neuf', data: results.credit, color: 'text-blue-300', monthly: results.credit.monthly },
-                                        { name: 'Comptant', data: results.cash, color: 'text-green-300', monthly: null },
-                                        { name: '🏆 Occasion', data: results.occasion, color: 'text-green-400 font-bold', monthly: results.occasion.monthly },
-                                    ] as const).map(({ name, data, color, monthly }) => {
-                                        const d = data as any;
+                                    {activeModes.map(({ key, shortLabel, color }) => {
+                                        const d = results[key] as any;
+                                        const monthly = key === 'cash' ? null : d.monthly;
                                         const isBest = d.realMonthly === bestOption.cost;
                                         return (
-                                            <tr key={name} className="border-b border-white/5">
-                                                <td className={`py-2 font-medium ${color}`}>{name}</td>
+                                            <tr key={key} className="border-b border-white/5">
+                                                <td className={`py-2 font-medium ${color}`}>{shortLabel}</td>
                                                 <td className="text-right text-white tabular-nums">{monthly != null ? fmt(monthly) : '—'}</td>
                                                 <td className="text-right text-white tabular-nums">{d.totalPaid ? fmt(d.totalPaid) : fmt(price)}</td>
                                                 <td className={`text-right font-bold tabular-nums ${isBest ? 'text-green-400' : d.ownsVehicle ? 'text-blue-400' : 'text-red-400'}`}>

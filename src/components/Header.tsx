@@ -11,7 +11,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenForm }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const isHome = location.pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,13 +24,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenForm }) => {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
-
-  const homeNavLinks = [
-    { name: "Services", href: "#features" },
-    { name: "Processus", href: "#process" },
-    { name: "Avis", href: "#testimonials" },
-    { name: "Tarifs", href: "#pricing" },
-  ];
 
   return (
     <header
@@ -47,17 +39,8 @@ const Header: React.FC<HeaderProps> = ({ onOpenForm }) => {
           <span className="text-xl font-display font-bold tracking-tight text-white">DOITZ<span className="text-brand-accent">.</span></span>
         </Link>
 
-        {/* Desktop Nav */}
+        {/* Desktop Nav — same on every page */}
         <nav className="hidden md:flex items-center gap-8">
-          {isHome && homeNavLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.href}
-              className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
-            >
-              {link.name}
-            </a>
-          ))}
           <Link
             to="/blog"
             className={`text-sm font-medium transition-colors ${location.pathname.startsWith('/blog')
@@ -107,16 +90,6 @@ const Header: React.FC<HeaderProps> = ({ onOpenForm }) => {
             className="md:hidden bg-brand-dark/95 backdrop-blur-xl border-b border-white/10 overflow-hidden"
           >
             <div className="flex flex-col p-6 gap-6">
-              {isHome && homeNavLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  className="text-lg font-medium text-slate-200"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {link.name}
-                </a>
-              ))}
               <Link
                 to="/blog"
                 className="text-lg font-medium text-brand-accent"

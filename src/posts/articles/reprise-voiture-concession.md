@@ -120,4 +120,4 @@ Investissement de 100-200€ qui rapporte 500-1 500€ :
 
 ---
 
-→ [Vendre au Meilleur Prix](/blog/vendre-vehicule-meilleur-prix) | [LeBonCoin Tips](/blog/vendre-voiture-leboncoin-tips) | [Calculateur Décote](/outils/calculateur-decote)
+→ [Vendre au Meilleur Prix](/blog/vendre-vehicule-meilleur-prix) | [LeBonCoin Tips](/blog/vendre-voiture-leboncoin-guide) | [Calculateur Décote](/outils/calculateur-decote)
