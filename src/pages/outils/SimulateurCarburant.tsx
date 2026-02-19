@@ -1,246 +1,245 @@
 import React, { useState, useMemo } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Fuel, Zap, Leaf, Calculator } from 'lucide-react';
+import { ArrowLeft, Fuel, Zap, Leaf, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
+import { SEO } from '@/components/layout/SEO';
+import { generateBreadcrumbSchema, generateWebApplicationSchema, generateFAQSchema } from '@/utils/structuredData';
+import { SITE_URL } from '@/utils/constants';
+
+const FAQ_DATA = [
+    { question: 'Diesel ou essence : lequel est le plus économique en 2026 ?', answer: 'Cela dépend de votre kilométrage annuel. Le diesel devient plus économique à partir d\'environ 20 000 km/an grâce à sa consommation plus faible. En dessous de 15 000 km/an, l\'essence est généralement plus rentable car le prix au litre est compensé par l\'écart de prix à l\'achat.' },
+    { question: 'Quel est le coût au km d\'une voiture électrique ?', answer: 'En moyenne, une voiture électrique coûte entre 2 et 3 centimes par km en énergie (recharge à domicile), contre 8 à 12 centimes pour un véhicule thermique. Même en comptant les recharges rapides (plus chères), l\'électrique reste 2 à 3 fois moins cher au kilomètre.' },
+    { question: 'L\'hybride vaut-il le coup ?', answer: 'L\'hybride (non-rechargeable) offre un bon compromis pour les trajets mixtes ville/route. L\'hybride rechargeable (PHEV) est intéressant si vous rechargez quotidiennement et faites moins de 50 km/jour en électrique. Au-delà, le surpoids du véhicule augmente la consommation thermique.' },
+    { question: 'Le GPL est-il encore avantageux ?', answer: 'Oui — le GPL coûte environ 0.95€/L (2024) et bénéficie d\'avantages fiscaux. Cependant, la surconsommation de 15-20% et la perte de volume de coffre sont à considérer. C\'est surtout intéressant pour les gros rouleurs (> 20 000 km/an).' },
+    { question: 'Comment réduire sa consommation de carburant ?', answer: 'Les principaux leviers sont : l\'éco-conduite (jusqu\'à -20%), le bon gonflage des pneus (-3% par 0.5 bar), limiter la climatisation, et éviter les surcharges. Sur autoroute, rouler à 120 km/h au lieu de 130 km/h économise environ 1L/100km.' },
+];
 
 const SimulateurCarburant = () => {
     const [kmPerYear, setKmPerYear] = useState(15000);
     const [years, setYears] = useState(5);
     const [prixEssence, setPrixEssence] = useState(1.85);
     const [prixDiesel, setPrixDiesel] = useState(1.70);
-    const [prixElec, setPrixElec] = useState(0.25);
+    const [prixElectricite, setPrixElectricite] = useState(0.22);
+    const [prixGPL, setPrixGPL] = useState(0.95);
 
-    const vehicles = useMemo(() => {
+    const [consoEssence, setConsoEssence] = useState(7.0);
+    const [consoDiesel, setConsoDiesel] = useState(5.5);
+    const [consoHybride, setConsoHybride] = useState(4.5);
+    const [consoElec, setConsoElec] = useState(17);
+    const [consoGPL, setConsoGPL] = useState(9.5);
+
+    const [faqOpen, setFaqOpen] = useState<number | null>(null);
+
+    const formatEuro = (n: number) => n.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+
+    const results = useMemo(() => {
         const totalKm = kmPerYear * years;
+        const essence = (totalKm / 100) * consoEssence * prixEssence;
+        const diesel = (totalKm / 100) * consoDiesel * prixDiesel;
+        const hybride = (totalKm / 100) * consoHybride * prixEssence;
+        const electrique = (totalKm / 100) * consoElec * prixElectricite;
+        const gpl = (totalKm / 100) * consoGPL * prixGPL;
 
-        const data = [
-            {
-                name: 'Essence',
-                icon: <Fuel className="text-orange-400" size={18} />,
-                conso: 6.5, // L/100km
-                prixUnit: prixEssence,
-                unit: 'L',
-                co2PerKm: 150,
-                color: 'orange',
-                entretien: 1200 * years,
-            },
-            {
-                name: 'Diesel',
-                icon: <Fuel className="text-slate-400" size={18} />,
-                conso: 5.2,
-                prixUnit: prixDiesel,
-                unit: 'L',
-                co2PerKm: 130,
-                color: 'slate',
-                entretien: 1400 * years,
-            },
-            {
-                name: 'Hybride (HEV)',
-                icon: <Leaf className="text-green-400" size={18} />,
-                conso: 4.5,
-                prixUnit: prixEssence,
-                unit: 'L',
-                co2PerKm: 100,
-                color: 'green',
-                entretien: 1000 * years,
-            },
-            {
-                name: 'Hybride rech. (PHEV)',
-                icon: <Leaf className="text-emerald-400" size={18} />,
-                // PHEV réaliste: 60% trajet court (électrique ~15kWh/100km) + 40% longs trajets (essence ~5.5L/100km)
-                conso: 5.5, // L-eq/100km en usage mixte réaliste (WLTP sous-estime beaucoup)
-                prixUnit: 0.60 * prixElec * (15 / 5.5) + 0.40 * prixEssence, // prix moyen pondéré
-                unit: 'L eq.',
-                co2PerKm: 40,
-                color: 'emerald',
-                entretien: 1100 * years,
-            },
-            {
-                name: 'Électrique (BEV)',
-                icon: <Zap className="text-cyan-400" size={18} />,
-                conso: 17, // kWh/100km
-                prixUnit: prixElec, // tarif domicile
-                unit: 'kWh',
-                co2PerKm: 0,
-                color: 'cyan',
-                entretien: 600 * years,
-            },
-        ];
+        const list = [
+            { label: 'Essence', cost: essence, icon: '⛽', color: 'text-orange-400', bg: 'bg-orange-400/10', co2: Math.round(consoEssence * 23.2 * totalKm / 1000) },
+            { label: 'Diesel', cost: diesel, icon: '🛢️', color: 'text-yellow-400', bg: 'bg-yellow-400/10', co2: Math.round(consoDiesel * 26.4 * totalKm / 1000) },
+            { label: 'Hybride', cost: hybride, icon: '🔋', color: 'text-green-400', bg: 'bg-green-400/10', co2: Math.round(consoHybride * 23.2 * totalKm / 1000) },
+            { label: 'Électrique', cost: electrique, icon: '⚡', color: 'text-cyan-400', bg: 'bg-cyan-400/10', co2: 0 },
+            { label: 'GPL', cost: gpl, icon: '🟢', color: 'text-emerald-400', bg: 'bg-emerald-400/10', co2: Math.round(consoGPL * 17.1 * totalKm / 1000) },
+        ].sort((a, b) => a.cost - b.cost);
 
-        return data.map((v) => {
-            const consoTotal = (v.conso / 100) * totalKm;
-            const costCarburant = Math.round(consoTotal * v.prixUnit);
-            const costPerKm = Math.round((consoTotal * v.prixUnit / totalKm) * 1000) / 10; // centimes
-            const costPerMonth = Math.round(costCarburant / (years * 12));
-            const co2Total = Math.round((v.co2PerKm * totalKm) / 1000); // kg → tonnes
-            return {
-                ...v,
-                consoTotal: Math.round(consoTotal),
-                costCarburant,
-                costPerKm,
-                costPerMonth,
-                co2Total,
-                totalCost: costCarburant + v.entretien,
-            };
-        });
-    }, [kmPerYear, years, prixEssence, prixDiesel, prixElec]);
+        return { list, totalKm, cheapest: list[0], mostExpensive: list[list.length - 1] };
+    }, [kmPerYear, years, prixEssence, prixDiesel, prixElectricite, prixGPL, consoEssence, consoDiesel, consoHybride, consoElec, consoGPL]);
 
-    const cheapest = vehicles.reduce((best, v) => v.totalCost < best.totalCost ? v : best, vehicles[0]);
-    const formatEuro = (n: number) => n.toLocaleString('fr-FR') + ' €';
+    const savings = results.mostExpensive.cost - results.cheapest.cost;
+    const pageUrl = `${SITE_URL}/outils/simulateur-carburant`;
 
     return (
         <>
-            <Helmet>
-                <title>Simulateur Carburant — Diesel vs Essence vs Électrique — Doitz</title>
-                <meta name="description" content="Comparez diesel, essence, hybride et électrique : coût au km, coût annuel, impact CO2. Simulateur interactif gratuit." />
-            </Helmet>
+            <SEO
+                title="Diesel vs Essence vs Électrique — Simulateur Carburant 2026"
+                description="Quel carburant est le plus économique ? Comparez le coût réel diesel, essence, hybride, électrique et GPL selon votre kilométrage. Calculateur gratuit avec prix personnalisables."
+                canonical={pageUrl}
+                keywords={['diesel vs essence', 'simulateur carburant', 'coût carburant', 'électrique vs thermique', 'GPL', 'comparatif énergie voiture']}
+                schema={[
+                    generateWebApplicationSchema('Simulateur Carburant — Diesel vs Essence vs Électrique', 'Comparez le coût réel diesel, essence, hybride, électrique et GPL selon votre kilométrage annuel.', pageUrl, ['diesel', 'essence', 'électrique', 'GPL', 'carburant', 'coût']),
+                    generateFAQSchema(FAQ_DATA),
+                ]}
+                breadcrumbs={generateBreadcrumbSchema([
+                    { name: 'Accueil', url: SITE_URL },
+                    { name: 'Outils', url: `${SITE_URL}/outils` },
+                    { name: 'Diesel vs Essence vs Électrique', url: pageUrl },
+                ])}
+            />
 
             <div className="min-h-screen pt-28 pb-16 px-4">
-                <div className="max-w-6xl mx-auto">
+                <div className="max-w-4xl mx-auto">
                     <Link to="/outils" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-blue-400 transition-colors mb-8">
                         <ArrowLeft size={16} />
                         Retour aux outils
                     </Link>
 
                     <div className="text-center mb-12">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold mb-4">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-semibold mb-4">
                             <Fuel size={14} />
-                            OUTIL INTERACTIF
+                            COMPARATEUR
                         </div>
                         <h1 className="text-3xl md:text-5xl font-bold text-white mb-3 font-display tracking-tight">
-                            Simulateur <span className="text-gradient">Coût Carburant</span>
+                            Diesel vs Essence vs <span className="text-gradient">Électrique</span>
                         </h1>
                         <p className="text-slate-400 max-w-2xl mx-auto">
-                            Essence, diesel, hybride, électrique : quel est le carburant le plus économique pour votre usage ?
+                            Comparez le coût réel en carburant sur plusieurs années. Prix, consommation et CO2 personnalisables.
                         </p>
                     </div>
 
-                    {/* Sliders */}
-                    <div className="glass-panel rounded-3xl p-6 mb-8">
-                        <div className="grid md:grid-cols-3 gap-6">
+                    <div className="grid lg:grid-cols-2 gap-8">
+                        {/* Inputs */}
+                        <div className="glass-panel rounded-3xl p-6 space-y-5">
                             <div>
-                                <label className="text-xs font-semibold text-blue-400 uppercase tracking-widest font-display block mb-2">
-                                    Kilométrage/an : <span className="text-white text-lg">{kmPerYear.toLocaleString('fr-FR')} km</span>
+                                <label className="text-xs font-semibold text-orange-400 uppercase tracking-widest font-display block mb-2">
+                                    Kilométrage annuel : <span className="text-white text-lg">{kmPerYear.toLocaleString('fr-FR')} km</span>
                                 </label>
-                                <input type="range" min={5000} max={50000} step={1000} value={kmPerYear}
+                                <input type="range" min={5000} max={60000} step={1000} value={kmPerYear}
                                     onChange={(e) => setKmPerYear(Number(e.target.value))} className="range-slider" />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold text-blue-400 uppercase tracking-widest font-display block mb-2">
-                                    Durée : <span className="text-white text-lg">{years} ans</span>
+                                <label className="text-xs font-semibold text-orange-400 uppercase tracking-widest font-display block mb-2">
+                                    Durée de possession : <span className="text-white text-lg">{years} ans</span>
                                 </label>
                                 <input type="range" min={1} max={10} value={years}
                                     onChange={(e) => setYears(Number(e.target.value))} className="range-slider" />
                             </div>
-                            <div className="space-y-2">
-                                <div className="flex gap-2">
-                                    <div className="flex-1">
-                                        <label className="text-[10px] text-slate-400 block">Essence €/L</label>
-                                        <input type="number" step={0.05} value={prixEssence}
-                                            onChange={(e) => setPrixEssence(Number(e.target.value))}
-                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm" />
+
+                            <div className="border-t border-white/5 pt-5">
+                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Prix au litre / kWh</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[11px] text-slate-400 block mb-1">Essence (€/L)</label>
+                                        <input type="number" step={0.01} value={prixEssence} onChange={(e) => setPrixEssence(Number(e.target.value))}
+                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm" />
                                     </div>
-                                    <div className="flex-1">
-                                        <label className="text-[10px] text-slate-400 block">Diesel €/L</label>
-                                        <input type="number" step={0.05} value={prixDiesel}
-                                            onChange={(e) => setPrixDiesel(Number(e.target.value))}
-                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm" />
+                                    <div>
+                                        <label className="text-[11px] text-slate-400 block mb-1">Diesel (€/L)</label>
+                                        <input type="number" step={0.01} value={prixDiesel} onChange={(e) => setPrixDiesel(Number(e.target.value))}
+                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm" />
                                     </div>
-                                    <div className="flex-1">
-                                        <label className="text-[10px] text-slate-400 block">Élec €/kWh</label>
-                                        <input type="number" step={0.01} value={prixElec}
-                                            onChange={(e) => setPrixElec(Number(e.target.value))}
-                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-1.5 text-white text-sm" />
+                                    <div>
+                                        <label className="text-[11px] text-slate-400 block mb-1">Électricité (€/kWh)</label>
+                                        <input type="number" step={0.01} value={prixElectricite} onChange={(e) => setPrixElectricite(Number(e.target.value))}
+                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] text-slate-400 block mb-1">GPL (€/L)</label>
+                                        <input type="number" step={0.01} value={prixGPL} onChange={(e) => setPrixGPL(Number(e.target.value))}
+                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-white/5 pt-5">
+                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Consommation moyenne</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[11px] text-slate-400 block mb-1">Essence (L/100km)</label>
+                                        <input type="number" step={0.1} value={consoEssence} onChange={(e) => setConsoEssence(Number(e.target.value))}
+                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] text-slate-400 block mb-1">Diesel (L/100km)</label>
+                                        <input type="number" step={0.1} value={consoDiesel} onChange={(e) => setConsoDiesel(Number(e.target.value))}
+                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] text-slate-400 block mb-1">Hybride (L/100km)</label>
+                                        <input type="number" step={0.1} value={consoHybride} onChange={(e) => setConsoHybride(Number(e.target.value))}
+                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] text-slate-400 block mb-1">Électrique (kWh/100km)</label>
+                                        <input type="number" step={0.5} value={consoElec} onChange={(e) => setConsoElec(Number(e.target.value))}
+                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] text-slate-400 block mb-1">GPL (L/100km)</label>
+                                        <input type="number" step={0.1} value={consoGPL} onChange={(e) => setConsoGPL(Number(e.target.value))}
+                                            className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-white text-sm" />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Results Cards */}
-                    <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                        {vehicles.map((v) => (
-                            <motion.div
-                                key={v.name}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className={`rounded-2xl p-4 border transition-all ${v.name === cheapest.name
-                                    ? 'bg-green-500/5 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.1)]'
-                                    : 'bg-white/[0.02] border-white/10'
-                                    }`}
-                            >
-                                {v.name === cheapest.name && (
-                                    <div className="text-[10px] font-bold text-green-400 mb-2">🏆 LE PLUS ÉCONOMIQUE</div>
-                                )}
-                                <div className="flex items-center gap-2 mb-3">
-                                    {v.icon}
-                                    <span className="text-sm font-bold text-white font-display">{v.name}</span>
+                        {/* Results */}
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                            className="glass-panel rounded-3xl p-6">
+                            <h2 className="text-lg font-bold text-white font-display mb-6 flex items-center gap-2">
+                                <Calculator size={20} className="text-orange-400" />
+                                Coût carburant sur {years} an{years > 1 ? 's' : ''} — {results.totalKm.toLocaleString('fr-FR')} km
+                            </h2>
+
+                            <div className="space-y-3">
+                                {results.list.map((item, i) => {
+                                    const barWidth = (item.cost / results.mostExpensive.cost) * 100;
+                                    return (
+                                        <div key={item.label} className={`rounded-xl p-4 ${i === 0 ? 'border-2 border-green-500/30 bg-green-500/5' : 'bg-white/[0.02]'}`}>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-lg">{item.icon}</span>
+                                                    <span className={`text-sm font-semibold ${item.color}`}>{item.label}</span>
+                                                    {i === 0 && <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full font-bold">LE + ÉCONOMIQUE</span>}
+                                                </div>
+                                                <span className="text-white font-bold tabular-nums">{formatEuro(item.cost)}</span>
+                                            </div>
+                                            <div className="w-full bg-white/5 rounded-full h-2 mb-2">
+                                                <motion.div initial={{ width: 0 }} animate={{ width: `${barWidth}%` }} transition={{ duration: 0.6, delay: i * 0.1 }}
+                                                    className={`h-full rounded-full ${item.bg.replace('/10', '/50')}`} />
+                                            </div>
+                                            <div className="flex justify-between text-[11px] text-slate-500">
+                                                <span>{formatEuro(item.cost / years)}/an</span>
+                                                <span>{formatEuro(item.cost / (years * 12))}/mois</span>
+                                                <span>{item.co2 > 0 ? `${item.co2.toLocaleString('fr-FR')} kg CO2` : '0 émission'}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {savings > 500 && (
+                                <div className="mt-4 p-3 bg-green-500/10 rounded-xl">
+                                    <p className="text-sm text-green-300">
+                                        💡 En choisissant <strong>{results.cheapest.label}</strong> plutôt que <strong>{results.mostExpensive.label}</strong>, vous économisez <strong>{formatEuro(savings)}</strong> en carburant sur {years} ans.
+                                    </p>
                                 </div>
-                                <div className="space-y-2 text-xs">
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">Carburant/{years}a</span>
-                                        <span className="text-white font-bold tabular-nums">{formatEuro(v.costCarburant)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">Entretien/{years}a</span>
-                                        <span className="text-white font-bold tabular-nums">{formatEuro(v.entretien)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">Coût/km</span>
-                                        <span className="text-white font-bold tabular-nums">{v.costPerKm} ct</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">Coût/mois</span>
-                                        <span className="text-white font-bold tabular-nums">{formatEuro(v.costPerMonth)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">CO₂ total</span>
-                                        <span className={`font-bold tabular-nums ${v.co2Total === 0 ? 'text-green-400' : 'text-white'}`}>
-                                            {v.co2Total > 0 ? `${v.co2Total} t` : '0 🌱'}
-                                        </span>
-                                    </div>
-                                    <div className="pt-2 border-t border-white/5 flex justify-between">
-                                        <span className="text-slate-300 font-medium">TOTAL</span>
-                                        <span className={`font-bold tabular-nums ${v.name === cheapest.name ? 'text-green-400' : 'text-white'}`}>
-                                            {formatEuro(v.totalCost)}
-                                        </span>
-                                    </div>
+                            )}
+
+                            <div className="mt-6 space-y-2">
+                                <Link to="/blog/diesel-vs-essence" className="block text-xs text-blue-400 hover:text-blue-300">
+                                    → Diesel vs Essence : guide complet 2026
+                                </Link>
+                                <Link to="/blog/electrique-vs-thermique" className="block text-xs text-blue-400 hover:text-blue-300">
+                                    → Électrique vs Thermique : le vrai comparatif
+                                </Link>
+                            </div>
+                        </motion.div>
+                    </div>
+
+                    {/* FAQ Section */}
+                    <div className="mt-12">
+                        <h2 className="text-2xl font-bold text-white font-display mb-6">Questions fréquentes</h2>
+                        <div className="space-y-3">
+                            {FAQ_DATA.map((faq, i) => (
+                                <div key={i} className="glass-panel rounded-2xl overflow-hidden">
+                                    <button onClick={() => setFaqOpen(faqOpen === i ? null : i)}
+                                        className="w-full flex items-center justify-between p-5 text-left">
+                                        <span className="text-sm font-semibold text-white pr-4">{faq.question}</span>
+                                        {faqOpen === i ? <ChevronUp size={18} className="text-orange-400 shrink-0" /> : <ChevronDown size={18} className="text-slate-400 shrink-0" />}
+                                    </button>
+                                    {faqOpen === i && (
+                                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="px-5 pb-5">
+                                            <p className="text-sm text-slate-300 leading-relaxed">{faq.answer}</p>
+                                        </motion.div>
+                                    )}
                                 </div>
-                            </motion.div>
-                        ))}
-                    </div>
-
-                    {/* Synthesis — dynamic based on user inputs */}
-                    <div className="glass-panel rounded-2xl p-6 mb-8">
-                        <h2 className="text-lg font-bold text-white font-display mb-3">💡 Analyse consommateur</h2>
-                        <div className="space-y-2 text-sm text-slate-300">
-                            <p>Sur <strong className="text-white">{(kmPerYear * years).toLocaleString('fr-FR')} km</strong> ({years} ans) :</p>
-                            <p>• L'<strong className="text-green-400">électrique</strong> économise <strong className="text-green-400">{formatEuro(vehicles[0].costCarburant - vehicles[4].costCarburant)}</strong> vs essence en carburant seul</p>
-                            {kmPerYear >= 20000
-                                ? <p>• À <strong className="text-white">{kmPerYear.toLocaleString('fr-FR')} km/an</strong>, le diesel redevient compétitif face à l'essence (-{formatEuro(vehicles[0].costCarburant - vehicles[1].costCarburant)})</p>
-                                : <p>• À <strong className="text-white">{kmPerYear.toLocaleString('fr-FR')} km/an</strong>, le diesel n'est <strong className="text-red-400">pas rentable</strong> — l'essence ou l'hybride sont plus avantageux</p>
-                            }
-                            <p>• L'hybride classique (HEV) est le <strong className="text-green-400">meilleur compromis</strong> sans borne de recharge</p>
-                            <p>• Le PHEV n'est rentable que si vous rechargez <strong>quotidiennement à domicile</strong>. Sans recharge régulière, il consomme autant qu'une essence avec 200 kg de plus</p>
-                        </div>
-                        <div className="mt-3 p-3 bg-amber-500/10 rounded-lg">
-                            <p className="text-xs text-amber-300">⚠️ <strong>Ce que ce simulateur ne montre pas :</strong> le surcoût d'achat. Un EV coûte 8 000-15 000€ de plus qu'un thermique équivalent. L'économie carburant ne compense pas toujours, surtout pour les petits rouleurs ({'<'} 10 000 km/an).</p>
-                        </div>
-                        <div className="mt-2 p-3 bg-blue-500/10 rounded-lg">
-                            <p className="text-xs text-blue-300">💡 <strong>Recharge publique vs domicile :</strong> ce calcul utilise le prix domicile ({prixElec}€/kWh). En charge publique : 0.40 à 0.70€/kWh, soit 2× à 3× plus cher. Si vous n'avez pas de prise à domicile, le coût EV est bien plus élevé.</p>
-                        </div>
-                    </div>
-
-                    {/* Links */}
-                    <div className="text-center glass-panel rounded-2xl p-6">
-                        <p className="text-slate-400 text-sm mb-4">Articles connexes :</p>
-                        <div className="flex flex-wrap gap-3 justify-center">
-                            <Link to="/blog/electrique-vs-thermique" className="text-xs text-blue-400 hover:text-blue-300 underline">Électrique vs Thermique</Link>
-                            <Link to="/blog/hybride-rechargeable-vs-classique" className="text-xs text-blue-400 hover:text-blue-300 underline">Hybride rech. vs classique</Link>
-                            <Link to="/blog/cout-recharge-electrique-calcul" className="text-xs text-blue-400 hover:text-blue-300 underline">Coût de recharge EV</Link>
-                            <Link to="/blog/borne-recharge-domicile-guide" className="text-xs text-blue-400 hover:text-blue-300 underline">Borne de recharge domicile</Link>
-                            <Link to="/blog/comparatif-suv-hybrides" className="text-xs text-blue-400 hover:text-blue-300 underline">Comparatif SUV hybrides</Link>
+                            ))}
                         </div>
                     </div>
                 </div>

@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, FileText, Calculator } from 'lucide-react';
+import { ArrowLeft, FileText, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
+import { SEO } from '@/components/layout/SEO';
+import { generateBreadcrumbSchema, generateWebApplicationSchema, generateFAQSchema } from '@/utils/structuredData';
+import { SITE_URL } from '@/utils/constants';
 
 const regions: Record<string, number> = {
     'Île-de-France': 54.95,
@@ -18,6 +20,11 @@ const regions: Record<string, number> = {
     'Occitanie': 47.00,
     'Pays de la Loire': 48.00,
     'Provence-Alpes-Côte d\'Azur': 51.20,
+    'Guadeloupe': 41.00,
+    'Martinique': 30.00,
+    'Guyane': 42.50,
+    'La Réunion': 51.00,
+    'Mayotte': 30.00,
 };
 
 const malusBareme2026: [number, number][] = [
@@ -32,6 +39,14 @@ const malusBareme2026: [number, number][] = [
     [200, 60000],
 ];
 
+const FAQ_DATA = [
+    { question: 'Comment est calculé le prix de la carte grise en 2026 ?', answer: 'Le prix de la carte grise se compose de 5 taxes : la taxe régionale (Y1), le malus écologique CO2 (Y3), la taxe de gestion fixe (Y4 = 11€), la redevance d\'acheminement (Y5 = 2,76€) et le malus au poids pour les véhicules neufs de plus de 1 800 kg (Y6). Le montant varie selon votre région, la puissance fiscale et les émissions CO2.' },
+    { question: 'Les véhicules électriques paient-ils la carte grise ?', answer: 'Les véhicules 100% électriques bénéficient d\'une exonération totale de la taxe régionale et du malus au poids. Ils ne paient que la taxe de gestion (11€) et la redevance d\'acheminement (2,76€), soit un total de 13,76€ seulement.' },
+    { question: 'Quel est le malus écologique en 2026 ?', answer: 'En 2026, le malus écologique s\'applique à partir de 118 g/km de CO2 (50€) et peut atteindre 60 000€ pour les véhicules émettant plus de 200 g/km. Il ne s\'applique qu\'aux véhicules neufs ou importés de moins d\'un an.' },
+    { question: 'La carte grise est-elle moins chère pour un véhicule d\'occasion ?', answer: 'Oui, les véhicules d\'occasion de plus de 10 ans bénéficient d\'un demi-tarif sur la taxe régionale. De plus, le malus écologique et le malus au poids ne s\'appliquent plus aux véhicules d\'occasion.' },
+    { question: 'Comment fonctionne le malus au poids 2026 ?', answer: 'Le malus au poids s\'applique aux véhicules neufs pesant plus de 1 800 kg, à raison de 10€ par kg excédentaire. Les véhicules électriques en sont exemptés. Les hybrides rechargeables émettant moins de 50 g/km bénéficient d\'un abattement de 200 kg.' },
+];
+
 const SimulateurCarteGrise = () => {
     const [region, setRegion] = useState('Île-de-France');
     const [puissanceFiscale, setPuissanceFiscale] = useState(6);
@@ -40,40 +55,28 @@ const SimulateurCarteGrise = () => {
     const [fuel, setFuel] = useState<'essence' | 'diesel' | 'hybride' | 'electrique'>('essence');
     const [isNew, setIsNew] = useState(false);
     const [age, setAge] = useState(3);
+    const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
     const results = useMemo(() => {
         const tarifRegional = regions[region] || 46;
-
-        // Y1: Taxe régionale
         let y1 = puissanceFiscale * tarifRegional;
-        // Véhicules propres: exonération possible
         if (fuel === 'electrique') y1 = 0;
         if (fuel === 'hybride') y1 = y1 * 0.5;
-        // Occasion > 10 ans: demi-tarif
         if (age >= 10) y1 = y1 * 0.5;
 
-        // Y2: Taxe professionnelle (fixe)
-        const y2 = 0; // Particuliers
-
-        // Y3: CO2 / Malus
+        const y2 = 0;
         let y3 = 0;
         if (isNew || age <= 0) {
-            // Malus only on new vehicles
             for (const [threshold, amount] of malusBareme2026) {
                 if (co2 >= threshold) y3 = amount;
             }
         }
 
-        // Y4: Taxe de gestion
         const y4 = 11;
-
-        // Y5: Redevance d'acheminement
         const y5 = 2.76;
 
-        // Y6: Malus au poids (>1800kg pour véhicule neuf, 10€/kg, EV exemptés)
         let y6 = 0;
         if ((isNew || age <= 0) && weight > 1800 && fuel !== 'electrique') {
-            // Hybrides rechargeables: abattement de 200kg si < 50g CO2
             const effectiveWeight = (fuel === 'hybride' && co2 <= 50) ? weight - 200 : weight;
             if (effectiveWeight > 1800) {
                 y6 = (effectiveWeight - 1800) * 10;
@@ -81,16 +84,28 @@ const SimulateurCarteGrise = () => {
         }
 
         const total = y1 + y2 + y3 + y4 + y5 + y6;
-
         return { y1: Math.round(y1), y3: Math.round(y3), y4, y5, y6: Math.round(y6), total: Math.round(total * 100) / 100 };
     }, [region, puissanceFiscale, co2, weight, fuel, isNew, age]);
 
+    const pageUrl = `${SITE_URL}/outils/simulateur-carte-grise`;
+
     return (
         <>
-            <Helmet>
-                <title>Simulateur Carte Grise — Calcul du Prix 2026 — Doitz</title>
-                <meta name="description" content="Calculez le prix de votre carte grise en 2026 : taxe régionale, malus CO2, frais de gestion. Simulateur gratuit par région." />
-            </Helmet>
+            <SEO
+                title="Simulateur Carte Grise 2026 — Calcul du Prix par Région"
+                description="Calculez le prix exact de votre carte grise en 2026 : taxe régionale, malus CO2, malus au poids, frais de gestion. Simulateur gratuit pour toutes les régions de France."
+                canonical={pageUrl}
+                keywords={['carte grise', 'simulateur carte grise', 'prix carte grise 2026', 'malus écologique', 'taxe régionale', 'malus au poids']}
+                schema={[
+                    generateWebApplicationSchema('Simulateur Carte Grise 2026', 'Calculez le prix de votre carte grise en 2026 : taxe régionale, malus CO2, malus au poids. Toutes les régions françaises.', pageUrl, ['carte grise', 'simulateur', 'malus CO2', 'taxe régionale']),
+                    generateFAQSchema(FAQ_DATA),
+                ]}
+                breadcrumbs={generateBreadcrumbSchema([
+                    { name: 'Accueil', url: SITE_URL },
+                    { name: 'Outils', url: `${SITE_URL}/outils` },
+                    { name: 'Simulateur Carte Grise', url: pageUrl },
+                ])}
+            />
 
             <div className="min-h-screen pt-28 pb-16 px-4">
                 <div className="max-w-4xl mx-auto">
@@ -108,7 +123,7 @@ const SimulateurCarteGrise = () => {
                             Simulateur <span className="text-gradient">Carte Grise</span>
                         </h1>
                         <p className="text-slate-400 max-w-2xl mx-auto">
-                            Calculez le coût exact de votre carte grise en 2026, région par région, malus inclus.
+                            Calculez le coût exact de votre carte grise en 2026, région par région, malus inclus. DOM/TOM compris.
                         </p>
                     </div>
 
@@ -122,9 +137,16 @@ const SimulateurCarteGrise = () => {
                                     onChange={(e) => setRegion(e.target.value)}
                                     className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:border-blue-500 focus:outline-none"
                                 >
-                                    {Object.keys(regions).map((r) => (
-                                        <option key={r} value={r}>{r} ({regions[r]} €/CV)</option>
-                                    ))}
+                                    <optgroup label="Métropole">
+                                        {Object.keys(regions).filter(r => !['Guadeloupe', 'Martinique', 'Guyane', 'La Réunion', 'Mayotte'].includes(r)).map((r) => (
+                                            <option key={r} value={r}>{r} ({regions[r]} €/CV)</option>
+                                        ))}
+                                    </optgroup>
+                                    <optgroup label="DOM/TOM">
+                                        {['Guadeloupe', 'Martinique', 'Guyane', 'La Réunion', 'Mayotte'].map((r) => (
+                                            <option key={r} value={r}>{r} ({regions[r]} €/CV)</option>
+                                        ))}
+                                    </optgroup>
                                 </select>
                             </div>
 
@@ -275,6 +297,30 @@ const SimulateurCarteGrise = () => {
                                 </Link>
                             </div>
                         </motion.div>
+                    </div>
+
+                    {/* FAQ Section */}
+                    <div className="mt-12">
+                        <h2 className="text-2xl font-bold text-white font-display mb-6">Questions fréquentes</h2>
+                        <div className="space-y-3">
+                            {FAQ_DATA.map((faq, i) => (
+                                <div key={i} className="glass-panel rounded-2xl overflow-hidden">
+                                    <button
+                                        onClick={() => setFaqOpen(faqOpen === i ? null : i)}
+                                        className="w-full flex items-center justify-between p-5 text-left"
+                                    >
+                                        <span className="text-sm font-semibold text-white pr-4">{faq.question}</span>
+                                        {faqOpen === i ? <ChevronUp size={18} className="text-blue-400 shrink-0" /> : <ChevronDown size={18} className="text-slate-400 shrink-0" />}
+                                    </button>
+                                    {faqOpen === i && (
+                                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                                            className="px-5 pb-5">
+                                            <p className="text-sm text-slate-300 leading-relaxed">{faq.answer}</p>
+                                        </motion.div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>

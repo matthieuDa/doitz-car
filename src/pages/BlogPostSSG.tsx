@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Clock, Tag, Phone, MessageCircle, ArrowRight } from 'lucide-react';
 import ReadingProgress from '@/components/blog/ReadingProgress';
 import TableOfContents from '@/components/blog/TableOfContents';
@@ -38,6 +38,14 @@ const categoryLabels: Record<string, string> = {
 const BlogPostSSG: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
     const openForm = () => window.dispatchEvent(new Event('open-lead-form'));
+    const [showMobileCTA, setShowMobileCTA] = useState(false);
+
+    // Show mobile sticky CTA after scrolling 400px
+    useEffect(() => {
+        const onScroll = () => setShowMobileCTA(window.scrollY > 400);
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
 
     // Find the markdown module for this slug
     const markdownRaw = useMemo(() => {
@@ -248,7 +256,34 @@ const BlogPostSSG: React.FC = () => {
                 )}
             </main>
 
-
+            {/* Mobile Sticky CTA */}
+            <AnimatePresence>
+                {showMobileCTA && (
+                    <motion.div
+                        initial={{ y: 100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 100, opacity: 0 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                        className="fixed bottom-0 inset-x-0 z-40 lg:hidden"
+                    >
+                        <div className="bg-brand-dark/95 backdrop-blur-xl border-t border-white/10 px-4 py-3 shadow-[0_-4px_30px_rgba(0,0,0,0.3)]">
+                            <div className="flex items-center gap-3 max-w-lg mx-auto">
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-white truncate">Un projet auto ?</p>
+                                    <p className="text-[11px] text-slate-400">Consultation gratuite</p>
+                                </div>
+                                <button
+                                    onClick={openForm}
+                                    className="shrink-0 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition-all flex items-center gap-1.5 shadow-lg shadow-blue-600/20"
+                                >
+                                    Devis gratuit
+                                    <ArrowRight size={14} />
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </>
     );
 };

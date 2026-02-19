@@ -1,8 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Plus, X, Search, Car, Fuel, Gauge, Box, Zap, Shield, Calculator } from 'lucide-react';
+import { ArrowLeft, Plus, X, Search, Car, Fuel, Gauge, Box, Zap, Shield, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
+import { SEO } from '@/components/layout/SEO';
+import { generateBreadcrumbSchema, generateWebApplicationSchema, generateFAQSchema } from '@/utils/structuredData';
+import { SITE_URL } from '@/utils/constants';
+
+const FAQ_COMPARATEUR = [
+    { question: 'Comment choisir entre deux voitures similaires ?', answer: 'Comparez les 4 critères clés : le prix d\'occasion à 3 ans (indicateur de décote), la consommation réelle, le volume de coffre et la fiabilité. Le prix neuf n\'est qu\'un des éléments — le coût total de possession (TCO) est plus pertinent.' },
+    { question: 'Quel SUV compact offre le meilleur rapport qualité-prix ?', answer: 'Le Dacia Duster III hybride offre le meilleur rapport qualité-prix grâce à son prix neuf imbattable (~20 000€) et une très faible consommation hybride (4,7 L/100km). Le Peugeot 3008 et le Kia Sportage sont d\'excellentes alternatives avec plus d\'équipements.' },
+    { question: 'Quelle est la citadine la plus fiable ?', answer: 'La Toyota Yaris domine avec un score de fiabilité de 5/5, suivie de la Renault Clio V et de la Dacia Spring. Toyota bénéficie de sa longue expertise en hybride et d\'un réseau après-vente dense.' },
+    { question: 'Vaut-il mieux acheter un véhicule neuf ou d\'occasion ?', answer: 'Un véhicule de 3 ans coûte en moyenne 35-45% moins cher qu\'un neuf tout en restant récent et souvent sous garantie. C\'est le sweet spot recommandé. L\'import européen d\'un véhicule récent permet d\'économiser encore plus.' },
+];
 
 /* ─── Vehicle Database ─── */
 interface Vehicle {
@@ -97,6 +106,7 @@ const ComparateurVehicules = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showPicker, setShowPicker] = useState(false);
     const [pickerSlot, setPickerSlot] = useState<number>(0);
+    const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
     const selectedVehicles = selected.map(id => vehicleDB.find(v => v.id === id)).filter(Boolean) as Vehicle[];
 
@@ -138,10 +148,21 @@ const ComparateurVehicules = () => {
 
     return (
         <>
-            <Helmet>
-                <title>Comparateur de Véhicules — Comparez jusqu'à 5 Voitures — Doitz</title>
-                <meta name="description" content="Comparez jusqu'à 5 véhicules côte à côte : prix, consommation, puissance, coffre, fiabilité. L'outil comparateur auto gratuit de Doitz." />
-            </Helmet>
+            <SEO
+                title="Comparateur de Véhicules — Comparez jusqu'à 5 Voitures"
+                description="Comparez jusqu'à 5 véhicules côte à côte : prix neuf, prix occasion, consommation, puissance, coffre, fiabilité. L'outil comparateur auto gratuit de Doitz."
+                canonical={`${SITE_URL}/outils/comparateur-vehicules`}
+                keywords={['comparateur voitures', 'comparatif auto', 'comparer véhicules', 'prix voiture', 'meilleur SUV', 'citadine fiable']}
+                schema={[
+                    generateWebApplicationSchema('Comparateur de Véhicules', 'Comparez jusqu\'à 5 véhicules côte à côte : prix, conso, coffre, fiabilité.', `${SITE_URL}/outils/comparateur-vehicules`, ['comparateur', 'véhicules', 'auto', 'prix']),
+                    generateFAQSchema(FAQ_COMPARATEUR),
+                ]}
+                breadcrumbs={generateBreadcrumbSchema([
+                    { name: 'Accueil', url: SITE_URL },
+                    { name: 'Outils', url: `${SITE_URL}/outils` },
+                    { name: 'Comparateur Véhicules', url: `${SITE_URL}/outils/comparateur-vehicules` },
+                ])}
+            />
 
             <div className="min-h-screen pt-28 pb-16 px-4">
                 <div className="max-w-7xl mx-auto">
@@ -334,6 +355,27 @@ const ComparateurVehicules = () => {
                         <Link to="/outils/simulateur-carburant" className="text-xs px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20">
                             → Comparaison carburant
                         </Link>
+                    </div>
+
+                    {/* FAQ Section */}
+                    <div className="mt-12">
+                        <h2 className="text-2xl font-bold text-white font-display mb-6">Questions fréquentes</h2>
+                        <div className="space-y-3">
+                            {FAQ_COMPARATEUR.map((faq, i) => (
+                                <div key={i} className="glass-panel rounded-2xl overflow-hidden">
+                                    <button onClick={() => setFaqOpen(faqOpen === i ? null : i)}
+                                        className="w-full flex items-center justify-between p-5 text-left">
+                                        <span className="text-sm font-semibold text-white pr-4">{faq.question}</span>
+                                        {faqOpen === i ? <ChevronUp size={18} className="text-cyan-400 shrink-0" /> : <ChevronDown size={18} className="text-slate-400 shrink-0" />}
+                                    </button>
+                                    {faqOpen === i && (
+                                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="px-5 pb-5">
+                                            <p className="text-sm text-slate-300 leading-relaxed">{faq.answer}</p>
+                                        </motion.div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>

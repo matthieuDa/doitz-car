@@ -1,8 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, TrendingDown, TrendingUp, AlertTriangle, CheckCircle, Calculator, Info } from 'lucide-react';
+import { ArrowLeft, TrendingDown, TrendingUp, AlertTriangle, CheckCircle, Calculator, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { SEO } from '@/components/layout/SEO';
+import { generateBreadcrumbSchema, generateWebApplicationSchema, generateFAQSchema } from '@/utils/structuredData';
+import { SITE_URL } from '@/utils/constants';
+
+const FAQ_FINANCEMENT = [
+    { question: 'LOA ou LLD : quelle est la différence ?', answer: 'La LOA (Location avec Option d\'Achat) vous permet de racheter le véhicule en fin de contrat. La LLD (Location Longue Durée) est une pure location : vous ne devenez jamais propriétaire. La LOA est plus flexible mais coûte souvent plus cher au total que l\'achat direct.' },
+    { question: 'Quel est le mode de financement le moins cher ?', answer: 'L\'achat d\'occasion récente (2-3 ans) financé par crédit est généralement le plus économique. Vous évitez la forte décote des premières années tout en restant propriétaire. L\'achat comptant est idéal si vous avez la trésorerie.' },
+    { question: 'Le leasing est-il toujours désavantageux ?', answer: 'Non. Le leasing (LLD/LOA) est pertinent si vous changez de véhicule tous les 2-3 ans et que la simplicité (entretien inclus, pas de revente) a de la valeur pour vous. Mais en coût pur, l\'achat reste le plus économique sur 4+ ans.' },
+    { question: 'Comment est calculé le \"coût réel / mois\" ?', answer: 'Le coût réel mensuel = (total des versements – valeur résiduelle à la revente) ÷ nombre de mois. C\'est la seule façon honnête de comparer les modes de financement : la mensualité seule ne reflète pas le vrai coût car elle ignore la valeur résiduelle.' },
+    { question: 'Quelle est la durée de crédit auto recommandée ?', answer: 'Idéalement 36 à 60 mois. Au-delà de 60 mois, les intérêts accumulés deviennent significatifs et le véhicule se déprécie plus vite que le remboursement. Un apport de 10-20% réduit le coût total et facilite l\'obtention du crédit.' },
+];
 
 /* ─── Reusable slider with native drag (no overlay div) ─── */
 const SliderInput = ({ label, value, onChange, min, max, step, unit, suffix }: {
@@ -101,6 +111,7 @@ const SimulateurFinancement = () => {
     const [kmPerYear, setKmPerYear] = useState(15000);
     const [creditRate, setCreditRate] = useState(4.5);
     const [selectedModes, setSelectedModes] = useState<Set<ModeKey>>(new Set(['occasion', 'loa', 'credit']));
+    const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
     const toggleMode = (key: ModeKey) => {
         if (key === 'occasion') return; // locked
@@ -191,10 +202,21 @@ const SimulateurFinancement = () => {
 
     return (
         <>
-            <Helmet>
-                <title>Simulateur LLD vs LOA vs Crédit — Doitz</title>
-                <meta name="description" content="Comparez LLD, LOA, crédit auto et achat comptant. Simulateur interactif pour trouver le financement le moins cher." />
-            </Helmet>
+            <SEO
+                title="Simulateur LLD vs LOA vs Crédit — Comparateur Financement Auto"
+                description="Comparez LLD, LOA, crédit auto et achat comptant. Simulateur interactif pour trouver le financement le moins cher en coût réel mensuel."
+                canonical={`${SITE_URL}/outils/simulateur-financement`}
+                keywords={['LOA', 'LLD', 'crédit auto', 'financement voiture', 'leasing vs achat', 'simulateur financement']}
+                schema={[
+                    generateWebApplicationSchema('Simulateur Financement Auto — LLD vs LOA vs Crédit', 'Comparez les modes de financement auto : LOA, LLD, crédit, achat comptant et occasion.', `${SITE_URL}/outils/simulateur-financement`, ['financement', 'LOA', 'LLD', 'crédit auto']),
+                    generateFAQSchema(FAQ_FINANCEMENT),
+                ]}
+                breadcrumbs={generateBreadcrumbSchema([
+                    { name: 'Accueil', url: SITE_URL },
+                    { name: 'Outils', url: `${SITE_URL}/outils` },
+                    { name: 'Simulateur Financement', url: `${SITE_URL}/outils/simulateur-financement` },
+                ])}
+            />
 
             <div className="min-h-screen pt-28 pb-16 px-4">
                 <div className="max-w-6xl mx-auto">
@@ -230,17 +252,17 @@ const SimulateurFinancement = () => {
                                         onClick={() => toggleMode(m.key)}
                                         disabled={isLocked}
                                         className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all border ${isSelected
-                                                ? isLocked
-                                                    ? 'bg-green-500/15 border-green-500/40 text-green-400 cursor-default'
-                                                    : 'bg-blue-500/15 border-blue-500/40 text-blue-300'
-                                                : 'bg-white/[0.02] border-white/10 text-slate-500 hover:border-white/20 hover:text-slate-300'
+                                            ? isLocked
+                                                ? 'bg-green-500/15 border-green-500/40 text-green-400 cursor-default'
+                                                : 'bg-blue-500/15 border-blue-500/40 text-blue-300'
+                                            : 'bg-white/[0.02] border-white/10 text-slate-500 hover:border-white/20 hover:text-slate-300'
                                             }`}
                                     >
                                         <span className={`w-4 h-4 rounded border-2 flex items-center justify-center text-[10px] ${isSelected
-                                                ? isLocked
-                                                    ? 'border-green-500 bg-green-500 text-white'
-                                                    : 'border-blue-500 bg-blue-500 text-white'
-                                                : 'border-slate-600'
+                                            ? isLocked
+                                                ? 'border-green-500 bg-green-500 text-white'
+                                                : 'border-blue-500 bg-blue-500 text-white'
+                                            : 'border-slate-600'
                                             }`}>
                                             {isSelected && '✓'}
                                         </span>
@@ -419,6 +441,27 @@ const SimulateurFinancement = () => {
                             <Link to="/blog/piege-loa-ce-quon-ne-vous-dit-pas" className="text-xs text-blue-400 hover:text-blue-300 underline">Les pièges de la LOA</Link>
                             <Link to="/blog/leasing-ou-achat-comparatif" className="text-xs text-blue-400 hover:text-blue-300 underline">Leasing ou achat ?</Link>
                             <Link to="/blog/credit-auto-meilleur-taux" className="text-xs text-blue-400 hover:text-blue-300 underline">Meilleur taux crédit</Link>
+                        </div>
+                    </div>
+
+                    {/* FAQ Section */}
+                    <div className="mt-8">
+                        <h2 className="text-2xl font-bold text-white font-display mb-6">Questions fréquentes</h2>
+                        <div className="space-y-3">
+                            {FAQ_FINANCEMENT.map((faq, i) => (
+                                <div key={i} className="glass-panel rounded-2xl overflow-hidden">
+                                    <button onClick={() => setFaqOpen(faqOpen === i ? null : i)}
+                                        className="w-full flex items-center justify-between p-5 text-left">
+                                        <span className="text-sm font-semibold text-white pr-4">{faq.question}</span>
+                                        {faqOpen === i ? <ChevronUp size={18} className="text-blue-400 shrink-0" /> : <ChevronDown size={18} className="text-slate-400 shrink-0" />}
+                                    </button>
+                                    {faqOpen === i && (
+                                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="px-5 pb-5">
+                                            <p className="text-sm text-slate-300 leading-relaxed">{faq.answer}</p>
+                                        </motion.div>
+                                    )}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>

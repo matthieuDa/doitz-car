@@ -1,8 +1,10 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calculator, FileText, Fuel, Wallet, ArrowRight, ArrowLeft, Car, TrendingDown } from 'lucide-react';
+import { SEO } from '@/components/layout/SEO';
+import { generateBreadcrumbSchema } from '@/utils/structuredData';
+import { SITE_URL } from '@/utils/constants';
 
 const tools = [
     {
@@ -67,10 +69,16 @@ const colorMap: Record<string, { bg: string; border: string; text: string; glow:
 const OutilsIndex = () => {
     return (
         <>
-            <Helmet>
-                <title>Outils Auto Gratuits — Simulateurs Doitz</title>
-                <meta name="description" content="Simulateurs auto gratuits : financement LOA/LLD/Crédit, carte grise, coût carburant, budget total. Prenez les meilleures décisions pour votre véhicule." />
-            </Helmet>
+            <SEO
+                title="Outils Auto Gratuits — Simulateurs Doitz"
+                description="Simulateurs auto gratuits : financement LOA/LLD/Crédit, carte grise, coût carburant, décote, comparateur véhicules. Prenez les meilleures décisions pour votre véhicule."
+                canonical={`${SITE_URL}/outils`}
+                keywords={['simulateur auto', 'outils gratuits voiture', 'calculateur carte grise', 'comparateur véhicules', 'coût voiture']}
+                breadcrumbs={generateBreadcrumbSchema([
+                    { name: 'Accueil', url: SITE_URL },
+                    { name: 'Outils', url: `${SITE_URL}/outils` },
+                ])}
+            />
 
             <div className="min-h-screen pt-28 pb-16 px-4">
                 <div className="max-w-5xl mx-auto">

@@ -120,3 +120,32 @@ export function generateBreadcrumbSchema(items: Array<{ name: string; url: strin
         })),
     };
 }
+
+export function generateWebApplicationSchema(
+    name: string,
+    description: string,
+    url: string,
+    keywords?: string[]
+) {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name,
+        description,
+        url,
+        applicationCategory: 'FinanceApplication',
+        operatingSystem: 'All',
+        offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'EUR',
+        },
+        creator: {
+            '@type': 'Organization',
+            '@id': `${SITE_URL}/#organization`,
+            name: 'Doitz',
+        },
+        inLanguage: 'fr-FR',
+        ...(keywords && keywords.length > 0 && { keywords: keywords.join(', ') }),
+    };
+}

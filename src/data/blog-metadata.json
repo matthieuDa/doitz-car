@@ -1310,5 +1310,23 @@
       "vente voiture particulier",
       "annonce voiture occasion"
     ]
+  },
+  {
+    "slug": "diesel-vs-essence",
+    "title": "Diesel ou Essence : Le Vrai Comparatif 2026",
+    "category": "Financier",
+    "type": "Comparatif",
+    "readTime": "10 min",
+    "image": "",
+    "excerpt": "Diesel ou essence en 2026 ? Comparatif complet : coût au km, décote, ZFE, entretien, valeur de revente. Tous les chiffres pour faire le bon choix.",
+    "publishedAt": "19 Février 2026",
+    "featured": false,
+    "keywords": [
+      "diesel ou essence",
+      "diesel vs essence",
+      "essence ou diesel 2026",
+      "consommation diesel essence",
+      "coût carburant voiture"
+    ]
   }
 ]
